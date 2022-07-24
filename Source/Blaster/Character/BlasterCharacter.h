@@ -36,5 +36,4 @@ private:
 
 public:	// Getter / Setter
 
-
 };

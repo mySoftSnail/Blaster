@@ -23,6 +23,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ShowPlayerNetRole(APawn* InPawn);
 
+	UFUNCTION(BlueprintCallable)
+	void ShowPlayerName(APawn* InPawn);
+
 protected:
 	/* 
 	OnLevelRemovedFromWorld is going to be called when we transition to a different level or leave the current level.
