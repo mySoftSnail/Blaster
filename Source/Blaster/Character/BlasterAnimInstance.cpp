@@ -35,4 +35,9 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	bIsCrouched = BlasterCharacter->bIsCrouched;
 
 	bAiming = BlasterCharacter->IsAiming();
+
+
+	FRotator AimRotation = BlasterCharacter->GetBaseAimRotation(); // global rotation
+	UE_LOG(LogTemp, Warning, TEXT("AimRotation Yaw: %f"), AimRotation.Yaw);
+
 }
