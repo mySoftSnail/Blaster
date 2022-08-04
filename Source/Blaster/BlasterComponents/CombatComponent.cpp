@@ -7,6 +7,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Components/SphereComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -25,6 +26,15 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 {
 	bAiming = bIsAiming; // Leave this line here because if I didn't have it here, we would have to wait..
 	ServerSetAiming(bIsAiming); // calling this from server just means that bIsAiming will be set on the server only and it'll replicate.
+}
+
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (EquippedWeapon && Character)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }
 
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
@@ -59,5 +69,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
 	}
 	EquippedWeapon->SetOwner(Character);
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
 } 
 
