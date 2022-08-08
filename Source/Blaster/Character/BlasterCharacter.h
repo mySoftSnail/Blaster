@@ -29,6 +29,7 @@ protected:
 	void CrouchButtonPressed();
 	void AimButtonPressed();
 	void AimButtonReleased();
+	void AimOffset(float DeltaTime);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -56,9 +57,14 @@ private:
 	void ServerEquipButtonPressed();
 	// 함수 정의는 ..._Implementation() 이라는 이름으로 해야 함
 
+	float AO_Yaw;
+	float AO_Pitch;
+	FRotator StartingAimRotation;
 
 public:	// Getter / Setter
 	void SetOverlappingWeapon(AWeapon* Weapon);
 	bool IsWeaponEquipped();
 	bool IsAiming();
+	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
+	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 };
