@@ -9,6 +9,7 @@
 #include "Sound/SoundCue.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/Blaster.h"
+#include "Net/UnrealNetwork.h"
 
 AProjectile::AProjectile()
 {
@@ -31,6 +32,8 @@ AProjectile::AProjectile()
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//DrawDebugSphere(GetWorld(), GetActorLocation(), 3.f, 12.f, FColor::Blue, true);
 	
 	if (Tracer)
 	{
@@ -52,33 +55,43 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	bool bHitPlayer = false;
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
 	if (BlasterCharacter)
 	{
-		BlasterCharacter->MulticastHit();
+		bHitPlayer = true;
+		BlasterCharacter->MulticastHit(Hit.ImpactPoint);
 	}
 
-	Destroy();
+	MulticastDestroy(bHitPlayer);
 }
 
 void AProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
 
+void AProjectile::MulticastDestroy_Implementation(bool bHitPlayer)
+{
+	// 이 함수 내용 전부 서버 머신에서만 실행됨... 왜??
+
+	if (!bHitPlayer)
+	{
+		if (ImpactParticles)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
+		}
+
+		if (ImpactSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
+		}
+	}
+
+	Destroy();
 }
 
 void AProjectile::Destroyed()
 {
 	Super::Destroyed();
-
-	if (ImpactParticles)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
-	}
-	if (ImpactSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
-	}
-
 }
-

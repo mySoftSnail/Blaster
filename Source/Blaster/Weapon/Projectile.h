@@ -14,6 +14,10 @@ class BLASTER_API AProjectile : public AActor
 public:	
 	AProjectile();
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastDestroy(bool bHitPlayer);
+
 	virtual void Destroyed() override;
 
 protected:

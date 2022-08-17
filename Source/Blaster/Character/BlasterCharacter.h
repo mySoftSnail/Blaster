@@ -22,7 +22,9 @@ public:
 	void PlayFireMontage(bool bAiming);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
+	void MulticastHit(FVector_NetQuantize HitLocation);
+
+	virtual void OnRep_ReplicatedMovement() override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,6 +38,8 @@ protected:
 	void AimButtonPressed();
 	void AimButtonReleased();
 	void AimOffset(float DeltaTime);
+	void CalculateAO_Pitch();
+	void SimProxiesTurn();
 	virtual void Jump() override;
 	void FireButtonPressed();
 	void FireButtonReleased();
@@ -81,10 +85,34 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* HitReactMontage;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UParticleSystem* HitParticles;
+
 	void HideCameraIfCharacterClose();
 
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
+
+	bool bRotateRootBone;
+	float TurnThreshold = 1.0f;
+	FRotator ProxyRotationLastFrame;
+	FRotator ProxyRotation;
+	float ProxyYaw;
+	float TimeSinceLastMovementReplication;
+	float CalculateSpeed();
+	
+	/**
+	* Player health
+	*/
+
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	float MaxHealth = 100.f; 
+
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
+	float Health = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
 
 public:	// Getter / Setter
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -96,4 +124,6 @@ public:	// Getter / Setter
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
+
 };
