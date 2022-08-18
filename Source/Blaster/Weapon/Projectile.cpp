@@ -55,15 +55,7 @@ void AProjectile::BeginPlay()
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	bool bHitPlayer = false;
-	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-	if (BlasterCharacter)
-	{
-		bHitPlayer = true;
-		BlasterCharacter->MulticastHit(Hit.ImpactPoint);
-	}
-
-	MulticastDestroy(bHitPlayer);
+	Destroy();
 }
 
 void AProjectile::Tick(float DeltaTime)
@@ -71,27 +63,17 @@ void AProjectile::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AProjectile::MulticastDestroy_Implementation(bool bHitPlayer)
-{
-	// 이 함수 내용 전부 서버 머신에서만 실행됨... 왜??
-
-	if (!bHitPlayer)
-	{
-		if (ImpactParticles)
-		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
-		}
-
-		if (ImpactSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
-		}
-	}
-
-	Destroy();
-}
-
 void AProjectile::Destroyed()
 {
 	Super::Destroyed();
+
+	if (ImpactParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
+	}
+
+	if (ImpactSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
+	}
 }
