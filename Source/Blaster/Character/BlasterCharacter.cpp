@@ -77,6 +77,11 @@ void ABlasterCharacter::OnRep_ReplicatedMovement() // Tick 대신 여기서 SimProxie
 
 void ABlasterCharacter::Elim() // 서버에서만 호출됨
 {
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
+
 	MulticastElim();
 	GetWorldTimerManager().SetTimer(
 		ElimTimer,
@@ -91,6 +96,7 @@ void ABlasterCharacter::MulticastElim_Implementation() // 모든 머신에서 호출됨
 	bElimmed = true;
 	PlayElimMontage();
 
+	// Start dissolve effect
 	if (DissolveMaterialInstance)
 	{
 		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
@@ -99,6 +105,19 @@ void ABlasterCharacter::MulticastElim_Implementation() // 모든 머신에서 호출됨
 		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
 	}
 	StartDissolve();
+
+	// Disable character movement
+	GetCharacterMovement()->DisableMovement(); // WASD 움직임 방지
+	GetCharacterMovement()->StopMovementImmediately();	// 캐릭터 회전 방지
+	if (BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);
+	}
+
+	// Disable collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 }
 
 void ABlasterCharacter::ElimTimerFinished() // 서버에서만 호출됨
