@@ -20,6 +20,7 @@ public:
 	void SetHUDDefeats(int32 Defeats);
 	void ShowElimText();
 	void SetHUDWeaponAmmo(int32 Ammo);
+	void SetHUDCarriedAmmo(int32 Ammo);
 	virtual void OnPossess(APawn* InPawn);
 
 protected:
