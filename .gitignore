@@ -81,3 +81,4 @@ DerivedDataCache/*
 # 모든 uasset, umap 파일 올리지 않음
 *.uasset
 *.umap
+/MASSCOMPONENTHITSUBSYSTEM.ipch

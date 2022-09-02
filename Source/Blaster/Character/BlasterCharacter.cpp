@@ -95,6 +95,10 @@ void ABlasterCharacter::Elim() // 서버에서만 호출됨
 
 void ABlasterCharacter::MulticastElim_Implementation() // 모든 머신에서 호출됨
 {
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->SetHUDWeaponAmmo(0);
+	}
 	bElimmed = true;
 	PlayElimMontage();
 
@@ -113,6 +117,7 @@ void ABlasterCharacter::MulticastElim_Implementation() // 모든 머신에서 호출됨
 	GetCharacterMovement()->StopMovementImmediately();	// 캐릭터 회전 방지
 	if (BlasterPlayerController)
 	{
+		BlasterPlayerController->ShowElimText();
 		DisableInput(BlasterPlayerController);
 	}
 
@@ -537,9 +542,11 @@ void ABlasterCharacter::OnRep_Health()
 
 void ABlasterCharacter::UpdateHUDHealth()
 {
+	UE_LOG(LogTemp, Warning, TEXT("ABlasterCharacter::UpdateHUDHealth(): GetLocalRole: %d"), GetLocalRole());
 	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
 	if (BlasterPlayerController)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Call BlasterPlayerController->SetHUDHealth(Health, MaxHealth) !!"));
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
 	}
 }
@@ -552,6 +559,7 @@ void ABlasterCharacter::PollInit()
 		if (BlasterPlayerState)
 		{
 			BlasterPlayerState->AddToScore(0.f);
+			BlasterPlayerState->AddToDefeats(0);
 		}
 	}
 }
