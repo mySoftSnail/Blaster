@@ -101,6 +101,30 @@ void AWeapon::SetHUDAmmo()
 	}
 }
 
+void AWeapon::SetHUDWeaponType()
+{
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter)
+	{
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController)
+		{
+			FString WeaponTypeString("");
+			switch (WeaponType) 
+			{
+			case EWeaponType::EWT_MAX:
+				break;
+
+			case EWeaponType::EWT_AssaultRifle:
+				WeaponTypeString = "Assault Rifle";
+				break;
+			}
+
+			BlasterOwnerController->SetHUDWeaponType(WeaponTypeString);
+		}
+	}
+}
+
 void AWeapon::SpendRound()
 {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
@@ -124,6 +148,7 @@ void AWeapon::OnRep_Owner()
 	else
 	{
 		SetHUDAmmo();
+		SetHUDWeaponType();
 	}
 }
 

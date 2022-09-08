@@ -140,7 +140,6 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 		EquippedWeapon->Dropped();
 	}
 
-
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
@@ -150,6 +149,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	}
 	EquippedWeapon->SetOwner(Character);
 	EquippedWeapon->SetHUDAmmo();
+	EquippedWeapon->SetHUDWeaponType();
 
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{

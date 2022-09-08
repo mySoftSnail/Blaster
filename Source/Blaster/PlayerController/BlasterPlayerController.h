@@ -21,6 +21,7 @@ public:
 	void ShowElimText();
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
+	void SetHUDWeaponType(FString WeaponTypeString);
 	virtual void OnPossess(APawn* InPawn);
 
 protected:

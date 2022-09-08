@@ -99,6 +99,7 @@ void ABlasterCharacter::MulticastElim_Implementation() // 모든 머신에서 호출됨
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDWeaponAmmo(0);
+		BlasterPlayerController->SetHUDWeaponType("");
 	}
 	bElimmed = true;
 	PlayElimMontage();
