@@ -58,6 +58,7 @@ protected:
 	void ServerReload();
 
 	void HandleReload(); // It will happen on server and clients and will handle everything that should happen on all machines.
+	int32 AmountToReload();
 
 private:
 	UPROPERTY()
@@ -150,6 +151,8 @@ private:
 
 	UFUNCTION()
 	void OnRep_CombatState();
+
+	void UpdateAmmoValues();
 
 public:	
 
