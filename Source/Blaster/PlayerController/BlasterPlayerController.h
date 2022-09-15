@@ -31,6 +31,7 @@ public:
 	virtual void ReceivedPlayer() override; // Sync with server clock as soon as possible
 	// ReceivedPlayer is the earliest we can possibly get the time from the server.
 	void OnMatchStateSet(FName State);
+	void HandleMatchHasStarted();
 
 protected:
 	virtual void BeginPlay() override;
