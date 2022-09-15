@@ -52,6 +52,23 @@ void ABlasterGameMode::Tick(float DeltaTime)
 	}
 }
 
+void ABlasterGameMode::OnMatchStateSet()
+{
+	Super::OnMatchStateSet();
+
+	// FConstPlayerControllerIterator can allow us to loop through all player controllers that exist in the game.
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It) /* this will result in us looping through all of the player controllers and we can access them by dereferencing this iterator */
+	{
+		ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(*It);
+		if (BlasterPlayer)
+		{
+			BlasterPlayer->OnMatchStateSet(MatchState);
+			// Now whenever the MatchState changes on the GameMode, it'll loop through all player controllers on the server and set their MatchState.
+		}
+	}
+
+}
+
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* ElimmedCharacter, ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController)
 {
 	ABlasterPlayerState* AttackerPlayerState = AttackerController ? Cast<ABlasterPlayerState>(AttackerController->PlayerState) : nullptr;
