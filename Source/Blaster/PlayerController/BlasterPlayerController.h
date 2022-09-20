@@ -23,6 +23,7 @@ public:
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDWeaponType(FString WeaponTypeString);
 	void SetHUDMatchCountdown(float CountdownTime);
+	void SetHUDAnnouncementCountdown(float CountdownTime);
 	virtual void OnPossess(APawn* InPawn);
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -32,6 +33,7 @@ public:
 	// ReceivedPlayer is the earliest we can possibly get the time from the server.
 	void OnMatchStateSet(FName State);
 	void HandleMatchHasStarted();
+	void HandleCooldown();
 
 protected:
 	virtual void BeginPlay() override;
@@ -59,11 +61,20 @@ protected:
 	float TimeSyncRunningTime = 0.f;
 	void CheckTimeSync(float DeltaTime);
 
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
+
+	UFUNCTION(Client, Reliable)
+	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float StartingTime); // this will handle informing the client of the MatchState when it joins.
+	// if it joins during InProgress progress, that's great. But no matter what, it's always going to join some period of time after the server has already been in the game ofr a little while. So really, all clients are sort of joining mid-game.
+
 private:
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD;
 
-	float MatchTime = 120.f;
+	float LevelStartingTime = 0.f;
+	float MatchTime = 0.f;
+	float WarmupTime = 0.f;
 	uint32 CountdownInt = 0;
 
 	UPROPERTY(ReplicatedUsing = OnRep_MatchState)

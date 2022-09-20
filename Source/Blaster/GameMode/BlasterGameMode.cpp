@@ -8,6 +8,11 @@
 #include "GameFramework/PlayerStart.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 
+namespace MatchState
+{
+	const FName Cooldown = FName("Cooldown");
+}
+
 ABlasterGameMode::ABlasterGameMode()
 {
 	bDelayedStart = true;
@@ -48,6 +53,15 @@ void ABlasterGameMode::Tick(float DeltaTime)
 			/*
 			StartMatch will result in the game mode transitioning to the InProgress state, thus spawning all player characters and allowing all the players to actually control their characters, run around, pick up weapons and start shooting each other.
 			*/
+		}
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		// 식에 대한 설명이 강의에 나와있음
+		CountdownTime = WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime <= 0.f)
+		{
+			SetMatchState(MatchState::Cooldown);
 		}
 	}
 }

@@ -11,16 +11,13 @@
 #include "Net/UnrealNetwork.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/HUD/Announcement.h"
+#include "Kismet/GameplayStatics.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
-	if (BlasterHUD)
-	{
-		BlasterHUD->AddAnnouncecment();
-	}
+	ServerCheckMatchState();
 }
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -49,6 +46,46 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
 			ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 			TimeSyncRunningTime = 0.f;
 		}
+	}
+}
+
+void ABlasterPlayerController::ServerCheckMatchState_Implementation()
+{
+	ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	if (GameMode)
+	{
+		WarmupTime = GameMode->WarmupTime;
+		MatchTime = GameMode->MatchTime;
+		LevelStartingTime = GameMode->LevelStartingTime;
+		MatchState = GameMode->GetMatchState();
+		ClientJoinMidgame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+
+		/*
+		Now I know that we made our MatchState replicated with a RepNotify. But if we want all these variables updated at the same time(So that way we can start doing things with the HUD when it's appropriate.) Instead we can use a Client RPC and pass these values down.  This is only going to happen once when the client joins the game.
+		*/
+
+		BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+		if (BlasterHUD && MatchState == MatchState::WaitingToStart) // So if we join mid-game during the InProgress state, we will not add the announcement.
+		{
+			BlasterHUD->AddAnnouncecment();
+		}
+	}
+}
+
+void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime)
+{
+	WarmupTime = Warmup;
+	MatchTime = Match;
+	LevelStartingTime = StartingTime;
+	MatchState = StateOfMatch;
+
+	// just in case this happnes after the variable replication for MatchState has already happened, then we can call OnMatchStateSet. that way, any sort of update that needs to happen will happen here.
+	OnMatchStateSet(MatchState);
+
+	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	if (BlasterHUD && MatchState == MatchState::WaitingToStart)
+	{
+		BlasterHUD->AddAnnouncecment();
 	}
 }
 
@@ -199,13 +236,40 @@ void ABlasterPlayerController::SetHUDMatchCountdown(float CountdownTime)
 	}
 }
 
+void ABlasterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	bool bHUDValid = BlasterHUD &&
+		BlasterHUD->Announcement &&
+		BlasterHUD->Announcement->WarmupTime;
+	if (bHUDValid)
+	{
+		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+		int32 Seconds = CountdownTime - Minutes * 60;
+
+		FString CountdownText(FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds));
+		BlasterHUD->Announcement->WarmupTime->SetText(FText::FromString(CountdownText));
+	}
+}
+
 
 void ABlasterPlayerController::SetHUDTime()
 {
-	uint32 SecondsLeft = FMath::CeilToInt(MatchTime - GetServerTime());
+	float TimeLeft = 0.f;
+	if (MatchState == MatchState::WaitingToStart) TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
+	else if(MatchState == MatchState::InProgress) TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
+
+	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
 	if (CountdownInt != SecondsLeft)
 	{
-		SetHUDMatchCountdown(MatchTime - GetServerTime());
+		if (MatchState == MatchState::WaitingToStart)
+		{
+			SetHUDAnnouncementCountdown(TimeLeft);
+		}
+		if (MatchState == MatchState::InProgress)
+		{
+			SetHUDMatchCountdown(TimeLeft);
+		}
 	}
 
 	CountdownInt = SecondsLeft;
@@ -268,10 +332,14 @@ void ABlasterPlayerController::OnMatchStateSet(FName State) // Whenever the Game
 		// About AddAnnouncement(), We can't do it in OnMatchStateSet when the MatchState has been set to WaitingToStart as that's too early and our HUD won't acutally exist yet.
 		// We have to do it in BeginPlay.
 	}
-	if (MatchState == MatchState::InProgress)
+	else if (MatchState == MatchState::InProgress)
 	{
 		HandleMatchHasStarted();
  	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		HandleCooldown();
+	}
 }
 
 void ABlasterPlayerController::OnRep_MatchState()
@@ -279,6 +347,10 @@ void ABlasterPlayerController::OnRep_MatchState()
 	if (MatchState == MatchState::InProgress)
 	{
 		HandleMatchHasStarted();
+	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		HandleCooldown();
 	}
 }
 
@@ -291,6 +363,19 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 		if (BlasterHUD->Announcement)
 		{
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+}
+
+void ABlasterPlayerController::HandleCooldown()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	if (BlasterHUD && BlasterHUD->CharacterOverlay)
+	{
+		BlasterHUD->CharacterOverlay->RemoveFromParent();
+		if (BlasterHUD->Announcement)
+		{
+			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
 }

@@ -17,8 +17,11 @@ void ABlasterHUD::AddCharacterOverlay()
 	APlayerController* PlayerController = GetOwningPlayerController();
 	if (PlayerController && CharacterOverlayClass)
 	{
-		CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
-		CharacterOverlay->AddToViewport();
+		if (CharacterOverlay == nullptr) 
+		{
+			CharacterOverlay = CreateWidget<UCharacterOverlay>(PlayerController, CharacterOverlayClass);
+			CharacterOverlay->AddToViewport();
+		}
 	}
 }
 
@@ -27,8 +30,11 @@ void ABlasterHUD::AddAnnouncecment()
 	APlayerController* PlayerController = GetOwningPlayerController();
 	if (PlayerController && AnnouncementClass)
 	{
-		Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
-		Announcement->AddToViewport();
+		if (Announcement == nullptr)
+		{
+			Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
+			Announcement->AddToViewport();
+		}
 	}
 }
 
