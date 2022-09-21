@@ -30,6 +30,9 @@ public:
 	void MulticastElim();
 	virtual void Destroyed() override;
 
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false; // the gameplay related functionality can be disabled, but we should still be able to do other things. such as rotate the mouse. 
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -56,6 +59,7 @@ protected:
 	void UpdateHUDHealth();
 	// Poll for any relevant classes and initialize our HUD
 	void PollInit();
+	void RotateInPlace(float DeltaTime);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -200,5 +204,7 @@ public:	// Getter / Setter
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	FORCEINLINE float GetElimDelay() const { return ElimDelay; }
 	ECombatState GetCombatState() const;
+	FORCEINLINE UCombatComponent* GetCombat() const { return Combat; }
+	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 
 };

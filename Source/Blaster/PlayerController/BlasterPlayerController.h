@@ -65,16 +65,20 @@ protected:
 	void ServerCheckMatchState();
 
 	UFUNCTION(Client, Reliable)
-	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float StartingTime); // this will handle informing the client of the MatchState when it joins.
+	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime); // this will handle informing the client of the MatchState when it joins.
 	// if it joins during InProgress progress, that's great. But no matter what, it's always going to join some period of time after the server has already been in the game ofr a little while. So really, all clients are sort of joining mid-game.
 
 private:
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD;
 
+	UPROPERTY()
+	class ABlasterGameMode* BlasterGameMode;
+
 	float LevelStartingTime = 0.f;
 	float MatchTime = 0.f;
 	float WarmupTime = 0.f;
+	float CooldownTime = 0.f;
 	uint32 CountdownInt = 0;
 
 	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
