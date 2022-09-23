@@ -117,8 +117,8 @@ void ABlasterCharacter::MulticastElim_Implementation() // 모든 머신에서 호출됨
 	StartDissolve();
 
 	// Disable character movement
-	GetCharacterMovement()->DisableMovement(); // WASD 움직임 방지
-	GetCharacterMovement()->StopMovementImmediately();	// 캐릭터 회전 방지
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
 	bDisableGameplay = true;
 	//컨트롤러 널 체크 후 - DisableInput(BlasterPlayerController); // that means that we can't add any input with the mouse or the keyboard. (죽은 상태에서 마우스 회전 등은 가능하게 하기 위해 bDisableGameplay = true 로 대체됨)
 	if (Combat)

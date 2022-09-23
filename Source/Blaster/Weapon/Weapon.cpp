@@ -118,6 +118,10 @@ void AWeapon::SetHUDWeaponType()
 			case EWeaponType::EWT_AssaultRifle:
 				WeaponTypeString = "Assault Rifle";
 				break;
+
+			case EWeaponType::EWT_RocketLauncher:
+				WeaponTypeString = "Rocket Launcher";
+				break;
 			}
 
 			BlasterOwnerController->SetHUDWeaponType(WeaponTypeString);
