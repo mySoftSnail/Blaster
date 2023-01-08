@@ -16,9 +16,9 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 		if (World)
 		{
 			/*
-			Now, server travel takes a address to travel to. And if we're calling this from the server and as we'll learn later on,
+			Now, ServerTravel takes a address to travel to. And if we're calling this from the server and as we'll learn later on,
 			the game mode only exists on the server. So we are definitely on the server if we're in the game mode class.
-			we can simply pass a path ot the level we'd like to travel to and all connected clients will travel to that level.
+			we can simply pass a path to the level we'd like to travel to and all connected clients will travel to that level.
 
 			this is going to be BlasterMap, but we neeed to travel to this level and designate it to be a listen server.
 			So we use a question mark to add additional options to the address. And the option we need is listen.

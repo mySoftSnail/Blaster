@@ -3,12 +3,65 @@
 
 #include "ProjectileRocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
+#include "Sound/SoundCue.h"
+#include "Components/BoxComponent.h"
+#include "Sound/SoundCue.h"
+#include "Components/AudioComponent.h"
 
 AProjectileRocket::AProjectileRocket()
 {
 	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rocket Mesh"));
 	RocketMesh->SetupAttachment(RootComponent);
 	RocketMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); // RocketMesh is purely cosmetic.
+}
+
+void AProjectileRocket::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (!HasAuthority()) // now we're binding all of the client projectiles OnHit functions
+	{
+		CollisionBox->OnComponentHit.AddDynamic(this, &AProjectileRocket::OnHit);
+	}
+
+	if (TrailSystem)
+	{
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			TrailSystem,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false // the reason is i like to deactivate system manually
+		);
+	}
+
+	if (ProjectileLoop && LoopingSoundAttenuation)
+	{
+		ProjectileLoopComponent = UGameplayStatics::SpawnSoundAttached(
+			ProjectileLoop,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			EAttachLocation::KeepWorldPosition,
+			false,
+			1.f,
+			1.f,
+			0.f,
+			LoopingSoundAttenuation,
+			(USoundConcurrency*)nullptr,
+			false
+		);
+	}
+}
+
+void AProjectileRocket::DestroyTimerFinished()
+{
+	Destroy();
 }
 
 void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -20,13 +73,14 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	if (FiringPawn)
 	{
 		AController* FiringController = FiringPawn->GetController();
-		if (FiringController)
+		if (FiringController && HasAuthority())
 		{
 			// ApplyRadialDamageWithFalloff: this way our rocket will damage anything within the vicinity, and we can have a falloff for that damage.
 			UGameplayStatics::ApplyRadialDamageWithFalloff(
 				this, // World context object
 				Damage, // BaseDamage
 				10.f, // MinimumDamage
+				// Max: BaseDamage, Min: MinimumDamage
 				GetActorLocation(), // Origin: Center of two radii
 				200.f, // DamageInnerRadius
 				500.f, // DamageOuterRadius
@@ -44,5 +98,44 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 		}
 	}
 
-	Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
+	GetWorldTimerManager().SetTimer(
+		DestroyTimer,
+		this,
+		&AProjectileRocket::DestroyTimerFinished,
+		DestroyTime
+	);
+
+	if (ImpactParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, GetActorTransform());
+	}
+
+	if (ImpactSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
+	}
+	if (RocketMesh)
+	{
+		RocketMesh->SetVisibility(false);
+	}
+	if (CollisionBox)
+	{
+		CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	if (TrailSystemComponent && TrailSystemComponent->GetSystemInstance())
+	{
+		TrailSystemComponent->GetSystemInstance()->Deactivate();
+	}
+	if (ProjectileLoopComponent && ProjectileLoopComponent->IsPlaying())
+	{
+		ProjectileLoopComponent->Stop();
+	}
+
+	// 로켓 프로젝타일의 스모크트레일이 바로 지워지지 않고 딜레이를 갖게 하기 위해 부모 프로젝타일 클래스와는 Destroy 과정을 다르게 구현함
+}
+
+void AProjectileRocket::Destroyed()
+{
+	// here we can simply NOT call Super::Destroyed()
+
 }
