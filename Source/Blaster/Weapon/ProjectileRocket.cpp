@@ -10,12 +10,17 @@
 #include "Components/BoxComponent.h"
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
+#include "RocketMovementComponent.h"
 
 AProjectileRocket::AProjectileRocket()
 {
 	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Rocket Mesh"));
 	RocketMesh->SetupAttachment(RootComponent);
 	RocketMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); // RocketMesh is purely cosmetic.
+
+	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("RocketMovementComponent"));
+	RocketMovementComponent->bRotationFollowsVelocity = true;
+	RocketMovementComponent->SetIsReplicated(true);
 }
 
 void AProjectileRocket::BeginPlay()
@@ -66,6 +71,13 @@ void AProjectileRocket::DestroyTimerFinished()
 
 void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (OtherActor == GetOwner())
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Hit self"));
+		return; // ProjectileMovementComponent는 OnHit 이벤트 발생 시 멈추게 되어 있으므로 제자리에 로켓이 멈추게 됨 
+		// 그래서 로켓 프로젝타일을 위한, OnHit 이벤트에도 멈추지 않는 커스텀 무브먼트 컴포넌트를 만들 것임
+	}
+
 	// now, when applying damage, we need to have the controller of the player who fired the rocket as that is the controller of our instigator. GetInstigator() returns us the pawn that owns this rocket.
 	// and just before we call SpawnActor in ProjectileWeapon.cpp, we create FActorSpawnParameters and we set SpawnParams.Owner = GetOwner() (The owner of the weapon) and SpawnParams.Instigator = InstigatorPawn (Cast of GetOwner())
 
@@ -122,9 +134,9 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	{
 		CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-	if (TrailSystemComponent && TrailSystemComponent->GetSystemInstance())
+	if (TrailSystemComponent && TrailSystemComponent->GetSystemInstanceController())
 	{
-		TrailSystemComponent->GetSystemInstance()->Deactivate();
+		TrailSystemComponent->GetSystemInstanceController()->Deactivate();
 	}
 	if (ProjectileLoopComponent && ProjectileLoopComponent->IsPlaying())
 	{
